@@ -1,11 +1,15 @@
+package eight.puzzle;
+
 import edu.princeton.cs.algs4.StdRandom;
 
+import java.util.Arrays;
 import java.util.Iterator;
 
 public final class Board {
-    final int[][] tiles;
+    private final int[][] tiles;
     private final int size;
-    final int blankSquarePos;
+    private final int blankSquarePos;
+    private Board twin;
 
     // create a board from an n-by-n array of tiles,
     // where tiles[row][col] = tile at (row, col)
@@ -70,17 +74,16 @@ public final class Board {
 
         for (int i = 0; i < size; i++) {
             for (int j = 0; j < size; j++) {
+                if (tiles[i][j] == 0) {
+                    continue;
+                }
+
                 int sum = size * i + j;
 
                 if (tiles[i][j] != sum + 1) {
                     ctr++;
                 }
             }
-        }
-
-        // empty space is last
-        if (tiles[size - 1][size - 1] == 0) {
-            ctr--;
         }
 
         return ctr;
@@ -92,13 +95,12 @@ public final class Board {
 
         for (int i = 0; i < size; i++) {
             for (int j = 0; j < size; j++) {
-                int destX, destY;
                 if (tiles[i][j] == 0) {
-                    destX = destY = size - 1;
-                } else {
-                    destX = (tiles[i][j] - 1) % size;
-                    destY = (tiles[i][j] - 1) / size;
+                    continue;
                 }
+
+                int destX = (tiles[i][j] - 1) % size;
+                int destY = (tiles[i][j] - 1) / size;
 
                 sum += Math.abs(j - destX) + Math.abs(i - destY);
             }
@@ -132,9 +134,11 @@ public final class Board {
         if (y == this) {
             return true;
         }
-        if (!(y instanceof Board other)) {
+        if (!(y instanceof Board)) {
             return false;
         }
+
+        Board other = (Board) y;
 
         return size == other.size && isEqualTo(other);
     }
@@ -222,25 +226,44 @@ public final class Board {
     }
 
     private Board createNeighbour(int x1, int y1, int x2, int y2) {
-        Board neighbour = new Board(this);
+        int[][] newTiles = new int[size][size];
 
-        neighbour.tiles[y1][x1] = tiles[y2][x2];
-        neighbour.tiles[y2][x2] = tiles[y1][x1];
+        for (int i = 0; i < newTiles.length; i++) {
+            System.arraycopy(tiles[i], 0, newTiles[i], 0, tiles.length);
+        }
 
-        return neighbour;
+        newTiles[y1][x1] = tiles[y2][x2];
+        newTiles[y2][x2] = tiles[y1][x1];
+
+        return new Board(newTiles);
     }
 
     // a board that is obtained by exchanging any pair of tiles
     public Board twin() {
-        Board twin = new Board(this);
+        if (twin == null) {
+            twin = generateTwin();
+        }
 
-        int x1 = StdRandom.uniformInt(0 ,size);
-        int y1 = StdRandom.uniformInt(0 ,size);
-        int x2 = StdRandom.uniformInt(0 ,size);
-        int y2 = StdRandom.uniformInt(0 ,size);
+        return twin;
+    }
 
-        twin.tiles[y1][x1] = tiles[y2][x2];
-        twin.tiles[y2][x2] = tiles[y1][x1];
+    private Board generateTwin() {
+        Board twin = new Board(tiles);
+
+        while (Arrays.deepEquals(tiles, twin.tiles)) {
+            int x1 = StdRandom.uniformInt(0 ,size);
+            int y1 = StdRandom.uniformInt(0 ,size);
+            int x2 = StdRandom.uniformInt(0 ,size);
+            int y2 = StdRandom.uniformInt(0 ,size);
+
+            // blank tile is not a tile
+            if (tiles[y1][x1] == 0 || tiles[y2][x2] == 0) {
+                continue;
+            }
+
+            twin.tiles[y1][x1] = tiles[y2][x2];
+            twin.tiles[y2][x2] = tiles[y1][x1];
+        }
 
         return twin;
     }

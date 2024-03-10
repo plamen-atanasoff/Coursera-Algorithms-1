@@ -1,3 +1,4 @@
+import eight.puzzle.Board;
 import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
